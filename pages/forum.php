@@ -2,6 +2,16 @@
 if(!defined('INITIALIZED'))
 	exit;
 
+// Inicializar variables comunes
+$links_to_pages = '';
+$errors = [];
+$number_of_rows = 0;
+
+// Valores por defecto para config
+$config['site']['darkborder'] = $config['site']['darkborder'] ?? '#D4C0A1';
+$config['site']['lightborder'] = $config['site']['lightborder'] ?? '#F1E0C6';
+$config['site']['vdarkborder'] = $config['site']['vdarkborder'] ?? '#505050';
+
 // CONFIG
 $level_limit = 30; // minimum 1 character with 30 lvl on account to post
 $post_interval = 20; // 20 seconds between posts
