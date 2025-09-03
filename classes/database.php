@@ -1,0 +1,266 @@
+<?php
+if(!defined('INITIALIZED'))
+	exit;
+
+class Database extends PDO
+{
+	public $connectionError = '';
+	private $connected = false;
+	const DB_MYSQL = 1;
+	const DB_SQLITE = 2;
+	const DB_PGSQL = 3;
+
+	private $db_driver;
+	private $db_host = 'localhost';
+	private $db_port = '3306';
+	private $db_name;
+	private $db_username;
+	private $db_password;
+	private $db_file;
+
+	public $queriesCount = 0;
+	public $printQueries = false;
+
+	public function establishConnection()
+	{
+		// Tu lógica de conexión aquí
+		try {
+			switch($this->db_driver) {
+				case self::DB_MYSQL:
+					$dsn = "mysql:host={$this->db_host};port={$this->db_port};dbname={$this->db_name}";
+					break;
+				case self::DB_SQLITE:
+					$dsn = "sqlite:{$this->db_file}";
+					break;
+				case self::DB_PGSQL:
+					$dsn = "pgsql:host={$this->db_host};port={$this->db_port};dbname={$this->db_name}";
+					break;
+				default:
+					throw new RuntimeException('Unsupported database driver');
+			}
+			
+			parent::__construct($dsn, $this->db_username, $this->db_password);
+			$this->setConnected(true);
+			return true;
+		} catch (PDOException $e) {
+			$this->setConnectionError($e->getMessage());
+			$this->setConnected(false);
+			return false;
+		}
+	}
+
+	public function isConnected()
+	{
+		return $this->connected;
+	}
+
+	public function setPrintQueries($value)
+	{
+		return $this->printQueries = $value;
+	}
+
+	public function setConnected($value)
+	{
+		$this->connected = $value;
+	}
+
+	public function getDatabaseDriver()
+	{
+		return $this->db_driver;
+	}
+
+	public function getDatabaseHost()
+	{
+		return $this->db_host;
+	}
+
+	public function getDatabasePort()
+	{
+		return $this->db_port;
+	}
+
+	public function getDatabaseName()
+	{
+		return $this->db_name;
+	}
+
+	public function getDatabaseUsername()
+	{
+		return $this->db_username;
+	}
+
+	public function getDatabasePassword()
+	{
+		return $this->db_password;
+	}
+
+	public function getDatabaseFile()
+	{
+		return $this->db_file;
+	}
+
+	public function setDatabaseDriver($value)
+	{
+		$this->db_driver = $value;
+	}
+
+	public function setDatabaseHost($value)
+	{
+		$this->db_host = $value;
+	}
+
+	public function setDatabasePort($value)
+	{
+		$this->db_port = $value;
+	}
+
+	public function setDatabaseName($value)
+	{
+		$this->db_name = $value;
+	}
+
+	public function setDatabaseUsername($value)
+	{
+		$this->db_username = $value;
+	}
+
+	public function setDatabasePassword($value)
+	{
+		$this->db_password = $value;
+	}
+
+	public function setDatabaseFile($value)
+	{
+		$this->db_file = $value;
+	}
+
+	public function beginTransaction()
+	{
+		if($this->isConnected() || $this->establishConnection())
+			return parent::beginTransaction();
+		else
+			throw new RuntimeException('Website is not connected to database. Cannot execute "beginTransaction()"');
+	}
+
+	public function commit()
+	{
+		if($this->isConnected() || $this->establishConnection())
+			return parent::commit();
+		else
+			throw new RuntimeException('Website is not connected to database. Cannot execute "commit()"');
+	}
+
+	public function errorCode()
+	{
+		if($this->isConnected() || $this->establishConnection())
+			return parent::errorCode();
+		else
+			throw new RuntimeException('Website is not connected to database. Cannot execute "errorCode()"');
+	}
+
+	public function errorInfo()
+	{
+		if($this->isConnected() || $this->establishConnection())
+			return parent::errorInfo();
+		else
+			throw new RuntimeException('Website is not connected to database. Cannot execute errorInfo()');
+	}
+
+	public function exec($statement)
+	{
+		if($this->isConnected() || $this->establishConnection())
+			return parent::exec($statement);
+		else
+			throw new RuntimeException('Website is not connected to database. Cannot execute exec($statement)');
+	}
+
+	public function getAttribute($attribute)
+	{
+		if($this->isConnected() || $this->establishConnection())
+			return parent::getAttribute($attribute);
+		else
+			throw new RuntimeException('Website is not connected to database. Cannot execute getAttribute($attribute)');
+	}
+
+	public function inTransaction()
+	{
+		if($this->isConnected() || $this->establishConnection())
+			return parent::inTransaction();
+		else
+			throw new RuntimeException('Website is not connected to database. Cannot execute inTransaction()');
+	}
+
+	public function lastInsertId($name = NULL)
+	{
+		if($this->isConnected() || $this->establishConnection())
+			return parent::lastInsertId($name);
+		else
+			throw new RuntimeException('Website is not connected to database. Cannot execute lastInsertId()');
+	}
+
+	public function prepare($statement, $driver_options = array())
+	{
+		if($this->isConnected() || $this->establishConnection())
+			return parent::prepare($statement, $driver_options);
+		else
+			throw new RuntimeException('Website is not connected to database. Cannot execute prepare()');
+	}
+
+	public function query(string $query, ?int $fetchMode = null, mixed ...$fetchModeArgs): PDOStatement|false
+	{
+		$this->queriesCount++;
+		
+		if($this->isConnected() || $this->establishConnection())
+		{
+			// Implementación flexible para compatibilidad
+			if (func_num_args() === 1) {
+				$ret = parent::query($query);
+			} else {
+				$ret = parent::query($query, $fetchMode, ...$fetchModeArgs);
+			}
+			
+			if($this->printQueries)
+			{
+				$_errorInfo = $this->errorInfo();
+				echo '<table>';
+				echo '<tr><td>Query: </td><td>' . $query . '</td></tr>';
+				echo '<tr><td>SQLSTATE: </td><td>' . $_errorInfo[0] . '</td></tr>';
+				echo '<tr><td>Driver code: </td><td>' . $_errorInfo[1] . '</td></tr>';
+				echo '<tr><td>Error message: </td><td>' . $_errorInfo[2] . '</td></tr>';
+				echo '</table>';
+			}
+			return $ret;
+		}
+		else
+			throw new RuntimeException('Website is not connected to database. Cannot execute query()');
+	}
+
+	public function quote($string, $parameter_type = PDO::PARAM_STR)
+	{
+		if($this->isConnected() || $this->establishConnection())
+			return parent::quote($string, $parameter_type);
+		else
+			throw new RuntimeException('Website is not connected to database. Cannot execute quote()');
+	}
+
+	public function rollBack()
+	{
+		if($this->isConnected() || $this->establishConnection())
+			return parent::rollBack();
+		else
+			throw new RuntimeException('Website is not connected to database. Cannot execute rollBack()');
+	}
+
+	public function setAttribute($attribute, $value)
+	{
+		if($this->isConnected() || $this->establishConnection())
+			return parent::setAttribute($attribute, $value);
+		else
+			throw new RuntimeException('Website is not connected to database. Cannot execute setAttribute()');
+	}
+
+	public function setConnectionError($string)
+	{
+		$this->connectionError = $string;
+	}
+}
