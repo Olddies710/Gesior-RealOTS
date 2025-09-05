@@ -56,7 +56,7 @@ function replaceAll($text, $smile)
     {
         $code = substr($text, stripos($text, '[code]')+6, stripos($text, '[/code]') - stripos($text, '[code]') - 6);
         if(!is_int($rows / 2)) { $bgcolor = 'ABED25'; } else { $bgcolor = '23ED25'; } $rows++;
-        $text = str_ireplace('[code]'.$code.'[/code]', '<i>Code:</i><br /><table cellpadding="0" style="background-color: #'.$bgcolor.'; width: 480px; border-style: dotted; border-color: #CCCCCC; border-width: 2px"><tr><td>'.$code.'</td></tr></table>', $text);
+        $text = str_ireplace('[code]'.$code.'[/code]', '<i>Code:</i><br /><table cellpadding="0" style="background-color: #'.$bgcolor.'; width: 480px; border-style: dotted; border-color: #CCCCCC; border-width: 2px"><tr><td>'.($code ?? '').'</td></tr></table>', $text ?? '');
     }
     $rows = 0;
     while(stripos($text, '[quote]') !== false && stripos($text, '[/quote]') !== false && stripos($text, '[quote]') < stripos($text, '[/quote]'))
@@ -173,7 +173,7 @@ if($action == '')
     {
         $last_post = $SQL->query("SELECT " . $SQL->tableName('players') . "." . $SQL->fieldName('charname') . ", " . $SQL->tableName('z_forum') . "." . $SQL->fieldName('post_date') . " FROM " . $SQL->tableName('players') . ", " . $SQL->tableName('z_forum') . " WHERE " . $SQL->tableName('z_forum') . "." . $SQL->fieldName('section') . " = ".(int) $id." AND " . $SQL->tableName('players') . "." . $SQL->fieldName('player_id') . " = " . $SQL->tableName('z_forum') . "." . $SQL->fieldName('author_guid') . " ORDER BY " . $SQL->fieldName('post_date') . " DESC LIMIT 1")->fetch();
         if(!is_int($number_of_rows / 2)) { $bgcolor = $config['site']['darkborder']; } else { $bgcolor = $config['site']['lightborder']; } $number_of_rows++;
-        $main_content .= '<tr bgcolor="'.$bgcolor.'"><td><a href="?subtopic=forum&action=show_board&id='.$id.'">'.$section.'</a><br /><small>'.$sections_desc[$id].'</small></td><td>'.(int) $counters[$id]['posts'].'</td><td>'.(int) $counters[$id]['threads'].'</td><td>';
+        $main_content .= '<tr bgcolor="'.$bgcolor.'"><td><a href="?subtopic=forum&action=show_board&id='.$id.'">'.$section.'</a><br /><small>'.$sections_desc[$id].'</small></td><td>'.(int) ($counters[$id]['posts'] ?? 0).'</td><td>'.(int) ($counters[$id]['threads'] ?? 0).'</td><td>';
         if(isset($last_post['charname']))
             $main_content .= date('d.m.y H:i:s', $last_post['post_date']).'<br />by <a href="?subtopic=characters&name='.urlencode($last_post['charname']).'">'.$last_post['charname'].'</a>';
         else
@@ -186,8 +186,8 @@ if($action == '')
 
 if($action == 'show_board')
 {
-    $section_id = (int) $_REQUEST['id'];
-    $page = (int) $_REQUEST['page'];
+    $section_id = (int) ($_REQUEST['id'] ?? 0);
+    $page = (int) ($_REQUEST['page'] ?? 1);
     $threads_count = $SQL->query("SELECT COUNT(" . $SQL->tableName('z_forum') . "." . $SQL->fieldName('id') . ") AS threads_count FROM " . $SQL->tableName('players') . ", " . $SQL->tableName('z_forum') . " WHERE " . $SQL->tableName('players') . "." . $SQL->fieldName('player_id') . " = " . $SQL->tableName('z_forum') . "." . $SQL->fieldName('author_guid') . " AND " . $SQL->tableName('z_forum') . "." . $SQL->fieldName('section') . " = ".(int) $section_id." AND " . $SQL->tableName('z_forum') . "." . $SQL->fieldName('first_post') . " = " . $SQL->tableName('z_forum') . "." . $SQL->fieldName('id') . "")->fetch();
     for($i = 0; $i < $threads_count['threads_count'] / $threads_per_page; $i++)
     {
@@ -227,8 +227,8 @@ if($action == 'show_board')
 }
 if($action == 'show_thread')
 {
-    $thread_id = (int) $_REQUEST['id'];
-    $page = (int) $_REQUEST['page'];
+    $thread_id = (int) ($_REQUEST['id'] ?? 0);
+    $page = (int) ($_REQUEST['page'] ?? 1);
     $thread_name = $SQL->query("SELECT " . $SQL->tableName('players') . "." . $SQL->fieldName('charname') . ", " . $SQL->tableName('z_forum') . "." . $SQL->fieldName('post_topic') . " FROM " . $SQL->tableName('players') . ", " . $SQL->tableName('z_forum') . " WHERE " . $SQL->tableName('z_forum') . "." . $SQL->fieldName('first_post') . " = ".(int) $thread_id." AND " . $SQL->tableName('z_forum') . "." . $SQL->fieldName('id') . " = " . $SQL->tableName('z_forum') . "." . $SQL->fieldName('first_post') . " AND " . $SQL->tableName('players') . "." . $SQL->fieldName('player_id') . " = " . $SQL->tableName('z_forum') . "." . $SQL->fieldName('author_guid') . " LIMIT 1")->fetch();
     if(!empty($thread_name['charname']))
     {
@@ -249,12 +249,20 @@ if($action == 'show_thread')
             $SQL->fieldName('post_smile') . ", " . $SQL->tableName('z_forum') . "." . $SQL->fieldName('author_aid') . ", " . $SQL->tableName('z_forum') . "." .
             $SQL->fieldName('author_guid') . ", " . $SQL->tableName('z_forum') . "." . $SQL->fieldName('last_edit_aid') . ", " . $SQL->tableName('z_forum') . "." .
             $SQL->fieldName('edit_date') . " FROM " . $SQL->tableName('z_forum') . ", " . $SQL->tableName('players') . " WHERE " . $SQL->tableName('players') . "." . $SQL->fieldName('player_id') . " = " . $SQL->tableName('z_forum') . "." . $SQL->fieldName('author_guid') . " AND " . $SQL->tableName('z_forum') . "." . $SQL->fieldName('first_post') . " = ".(int) $thread_id." ORDER BY " . $SQL->tableName('z_forum') . "." . $SQL->fieldName('post_date') . " LIMIT ".$posts_per_page." OFFSET ".($page * $posts_per_page))->fetchAll();
-        if(isset($threads[0]['charname']))
-            $SQL->query("UPDATE " . $SQL->tableName('z_forum') . " SET " . $SQL->fieldName('views') . "=" . $SQL->fieldName('views') . "+1 WHERE " . $SQL->fieldName('id') . " = ".(int) $thread_id);
-        $main_content .= '<a href="?subtopic=forum">Boards</a> >> <a href="?subtopic=forum&action=show_board&id='.$threads[0]['section'].'">'.$sections[$threads[0]['section']].'</a> >> <b>'.htmlspecialchars($thread_name['post_topic']).'</b>';
-        $main_content .= '<br /><br /><a href="?subtopic=forum&action=new_post&thread_id='.$thread_id.'"><img src="images/forum/post.gif" border="0" /></a><br /><br />Page: '.$links_to_pages.'<br /><table width="100%"><tr bgcolor="'.$config['site']['lightborder'].'" width="100%"><td colspan="2"><font size="4"><b>'.htmlspecialchars($thread_name['post_topic']).'</b></font><font size="1"><br />by <a href="?subtopic=characters&name='.urlencode($thread_name['charname']).'">'.htmlspecialchars($thread_name['charname']).'</a></font></td></tr><tr bgcolor="'.$config['site']['vdarkborder'].'"><td width="200"><font color="white" size="1"><b>Author</b></font></td><td>&nbsp;</td></tr>';
-        foreach($threads as $thread)
-        {
+if(isset($threads[0]['charname']))
+    $SQL->query("UPDATE " . $SQL->tableName('z_forum') . " SET " . $SQL->fieldName('views') . "=" . $SQL->fieldName('views') . "+1 WHERE " . $SQL->fieldName('id') . " = ".(int) $thread_id);
+
+// Verificar si $threads tiene elementos antes de acceder
+if(isset($threads[0]) && isset($threads[0]['section'])) {
+    $main_content .= '<a href="?subtopic=forum">Boards</a> >> <a href="?subtopic=forum&action=show_board&id='.$threads[0]['section'].'">'.$sections[$threads[0]['section']].'</a> >> <b>'.htmlspecialchars($thread_name['post_topic']).'</b>';
+} else {
+    // Fallback si no hay datos de thread
+    $main_content .= '<a href="?subtopic=forum">Boards</a> >> <b>'.htmlspecialchars($thread_name['post_topic']).'</b>';
+}
+
+$main_content .= '<br /><br /><a href="?subtopic=forum&action=new_post&thread_id='.$thread_id.'"><img src="images/forum/post.gif" border="0" /></a><br /><br />Page: '.$links_to_pages.'<br /><table width="100%"><tr bgcolor="'.$config['site']['lightborder'].'" width="100%"><td colspan="2"><font size="4"><b>'.htmlspecialchars($thread_name['post_topic']).'</b></font><font size="1"><br />by <a href="?subtopic=characters&name='.urlencode($thread_name['charname']).'">'.htmlspecialchars($thread_name['charname']).'</a></font></td></tr><tr bgcolor="'.$config['site']['vdarkborder'].'"><td width="200"><font color="white" size="1"><b>Author</b></font></td><td>&nbsp;</td></tr>';
+foreach($threads as $thread)
+{
             if(!is_int($number_of_rows / 2)) { $bgcolor = $config['site']['darkborder']; } else { $bgcolor = $config['site']['lightborder']; } $number_of_rows++;
             $main_content .= '<tr bgcolor="'.$bgcolor.'"><td valign="top"><a href="?subtopic=characters&name='.urlencode($thread['charname']).'">'.htmlspecialchars($thread['charname']).'</a><br /><br /><font size="1">Profession: '.htmlspecialchars($thread['vocation']).'<br />Level: '.$thread['level'].'<br />';
 
@@ -327,11 +335,12 @@ if($action == 'new_post')
             $main_content .= '<a href="?subtopic=forum">Boards</a> >> <a href="?subtopic=forum&action=show_board&id='.$thread['section'].'">'.$sections[$thread['section']].'</a> >> <a href="?subtopic=forum&action=show_thread&id='.$thread_id.'">'.htmlspecialchars($thread['post_topic']).'</a> >> <b>Post new reply</b><br /><h3>'.htmlspecialchars($thread['post_topic']).'</h3>';
             if(isset($thread['id']))
             {
-                $quote = (int) $_REQUEST['quote'];
-                $text = trim(codeLower($_REQUEST['text']));
-                $char_id = (int) $_REQUEST['char_id'];
-                $post_topic = trim($_REQUEST['topic']);
-                $smile = (int) $_REQUEST['smile'];
+            // INITIALIZE VARIABLES HERE:
+                $quote = (int) ($_POST['quote'] ?? 0);
+                $text = trim(codeLower($_POST['text'] ?? ''));
+                $char_id = (int) ($_POST['char_id'] ?? 0);
+                $post_topic = trim($_POST['topic'] ?? '');
+                $smile = (int) ($_POST['smile'] ?? 0);
                 $saved = false;
                 if(isset($_REQUEST['quote']))
                 {
@@ -440,10 +449,10 @@ if($action == 'edit_post')
                     $saved = false;
                     if(isset($_REQUEST['save']))
                     {
-                        $text = trim(codeLower($_REQUEST['text']));
-                        $char_id = (int) $_REQUEST['char_id'];
-                        $post_topic = trim($_REQUEST['topic']);
-                        $smile = (int) $_REQUEST['smile'];
+                    $text = trim(codeLower($_POST['text'] ?? ''));
+                    $char_id = (int) ($_POST['char_id'] ?? 0);
+                    $post_topic = trim($_POST['topic'] ?? '');
+                    $smile = (int) ($_POST['smile'] ?? 0);
                         $lenght = 0;
                         for($i = 0; $i <= strlen($post_topic); $i++)
                         {
@@ -543,11 +552,12 @@ if($action == 'new_topic')
             {
                 if($section_id == 1 && $group_id_of_acc_logged < $group_not_blocked)
                     $errors[] = 'Only moderators and admins can post on news board.';
-                $quote = (int) $_REQUEST['quote'];
-                $text = trim(codeLower($_REQUEST['text']));
-                $char_id = (int) $_REQUEST['char_id'];
-                $post_topic = trim($_REQUEST['topic']);
-                $smile = (int) $_REQUEST['smile'];
+            // INITIALIZE VARIABLES HERE:
+                 $quote = (int) ($_POST['quote'] ?? 0);
+                $text = trim(codeLower($_POST['text'] ?? ''));
+                $char_id = (int) ($_POST['char_id'] ?? 0);
+                $post_topic = trim($_POST['topic'] ?? '');
+                $smile = (int) ($_POST['smile'] ?? 0);
                 $saved = false;
                 if(isset($_REQUEST['save']))
                 {

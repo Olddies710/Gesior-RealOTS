@@ -32,16 +32,16 @@ public function load($search_text, $search_by = self::LOADTYPE_ID)
     else
         new Error_Critic('', 'Wrong Account search_by type.');
     
+    // Inicializar con valores por defecto primero
+    foreach (self::$fields as $fieldName) {
+        $this->data[$fieldName] = null;
+    }
+    
     $fieldsArray = array();
     foreach (self::$fields as $fieldName)
         $fieldsArray[$fieldName] = $this->getDatabaseHandler()->fieldName($fieldName);
     
     $result = $this->getDatabaseHandler()->query('SELECT ' . implode(', ', $fieldsArray) . ' FROM ' . $this->getDatabaseHandler()->tableName(self::$table) . ' WHERE ' . $search_string)->fetch();
-    
-    // Inicializar con valores por defecto primero
-    foreach (self::$fields as $fieldName) {
-        $this->data[$fieldName] = null;
-    }
     
     // Luego asignar los valores del resultado si existe
     if ($result) {
@@ -194,12 +194,12 @@ public function load($search_text, $search_by = self::LOADTYPE_ID)
 
     public function setCreateDate($value)
     {
-        $this->data['creation'] = $value;
+    $this->data['create_date'] = $value; // Cambiar 'creation' por 'create_date'
     }
 
     public function getCreateDate()
     {
-        return $this->data['creation'];
+    return $this->data['create_date']; // Cambiar 'creation' por 'create_date'
     }
 
     public function setPremiumPoints($value)

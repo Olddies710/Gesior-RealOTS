@@ -24,7 +24,19 @@ $vocations_online_count = array(0,0,0,0,0); // change it if you got more then 5 
 $players_rows = '';
 foreach($players_online_data as $player)
 {
-	$vocations_online_count[$player['vocation']] += 1;
+// Replace your foreach loop with this:
+if (!empty($online_players) && is_iterable($online_players)) {
+    foreach ($online_players as $player) {
+        $vocation = $player['vocation'] ?? 'None';
+        if (!isset($vocations_online_count[$vocation])) {
+            $vocations_online_count[$vocation] = 0;
+        }
+        $vocations_online_count[$vocation]++;
+    }
+} else {
+    // Handle the case where there are no online players or variable is not set
+    $vocations_online_count = ['None' => 0];
+}
 	$bgcolor = (($number_of_players_online++ % 2 == 1) ?  $config['site']['darkborder'] : $config['site']['lightborder']);
 	$skull = '';
 
